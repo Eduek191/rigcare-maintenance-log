@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equipment Maintenance Log - Oil & Gas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        h1, h2, h3, h4 {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .oil-gas-header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+        }
+
+        .alert-critical {
+            background: #fee2e2;
+            border-left: 4px solid #dc2626;
+            color: #7f1d1d;
+        }
+
+        .equipment-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 via-white to-slate-50">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="sticky top-0 z-50 border-b border-slate-200 oil-gas-header text-white shadow-lg">
+            <div class="max-w-7xl mx-auto px-6 py-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-3xl text-white">⚙️ Equipment Maintenance Log</h1>
+                        <p class="text-blue-100 mt-1">Oil & Gas Industry - Safety First</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button id="exportBtn" class="px-4 py-2 rounded-lg bg-white/20 text-white hover:bg-white/30 transition-colors font-medium text-sm border border-white/30">
+                            📥 Export CSV
+                        </button>
+                        <button id="addBtn" class="px-4 py-2 rounded-lg bg-amber-500 text-white hover:bg-amber-600 transition-colors font-medium text-sm shadow-lg">
+                            + New Entry
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-6 py-8">
+            <!-- Critical Alerts -->
+            <div id="criticalAlerts" class="mb-6"></div>
+
+            <!-- Filters Section -->
+            <div class="mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Equipment Type</label>
+                    <select id="filterEquipment" class="w-full px-4 py-2 rounded-lg border border-slate-300 text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-600">
+                        <option value="">All Equipment</option>
+                        <option value="pump">Pump</option>
+                        <option value="compressor">Compressor</option>
+                        <option value="turbine">Turbine</option>
+                        <option value="valve">Valve</option>
+                        <option value="heat-exchanger">Heat Exchanger</option>
+                        <option value="separator">Separator</option>
+                        <option value="motor">Motor</option>
+                        <option value="dryer">Dryer</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Status</label>
+                    <select id="filterStatus" class="w-full px-4 py-2 rounded-lg border border-slate-300 text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-600">
+                        <option value="">All Status</option>
+                        <option value="completed">✓ Completed</option>
+                        <option value="pending">⏱ Pending</option>
+                        <option value="in-progress">⚙ In Progress</option>
+                        <option value="overdue">⚠ Overdue</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">From Date</label>
+                    <input type="date" id="filterFromDate" class="w-full px-4 py-2 rounded-lg border border-slate-300 text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-600">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">To Date</label>
+                    <input type="date" id="filterToDate" class="w-full px-4 py-2 rounded-lg border border-slate-300 text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-600">
+                </div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="text-slate-600 text-sm font-medium mb-1">📋 Total Records</div>
+                    <div class="text-3xl font-bold text-slate-900" id="totalEntries">0</div>
+                </div>
+                <div class="bg-white rounded-xl border border-green-200 border-l-4 p-6 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="text-slate-600 text-sm font-medium mb-1">✓ Completed</div>
+                    <div class="text-3xl font-bold text-green-600" id="completedCount">0</div>
+                </div>
+                <div class="bg-white rounded-xl border border-amber-200 border-l-4 p-6 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="text-slate-600 text-sm font-medium mb-1">⏱ Pending</div>
+                    <div class="text-3xl font-bold text-amber-600" id="pendingCount">0</div>
+                </div>
+                <div class="bg-white rounded-xl border border-red-200 border-l-4 p-6 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="text-slate-600 text-sm font-medium mb-1">⚠ Overdue</div>
+                    <div class="text-3xl font-bold text-red-600" id="overdueCount">0</div>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-slate-200 bg-slate-50">
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Equipment ID</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Location</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Type</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Work Type</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Last Service</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Next Due</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Technician</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Cost</th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                        </tbody>
+                    </table>
+                </div>
+                <div id="emptyState" class="text-center py-12">
+                    <p class="text-slate-500">📭 No maintenance records found.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-gradient-to-r from-blue-900 to-blue-700 text-white px-6 py-4 flex items-center justify-between">
+                <h2 class="text-2xl font-bold" id="modalTitle">New Maintenance Entry</h2>
+                <button id="closeModal" class="text-blue-100 hover:text-white text-2xl">&times;</button>
+            </div>
+            
+            <form id="maintenanceForm" class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Equipment ID *</label>
+                        <input type="text" id="formEquipmentId" placeholder="e.g., P-001, C-002" class="w-full px-4 py-2 rounded-lg border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600" required>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Location *</label>
+                        <input type="text" id="formLocation" placeholder="e.g., Platform A, Well #3" class="w-full px-4 py-2 rounded-lg border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600" required>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Equipment Type *</label>
+                        <select id="formEquipmentType" class="w-full px-4 py-2 rounded-lg border border-slate-300 text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-600" required>
+                            <option value="">Select Type</option>
+                            <option value="pump">Pump</option>
+                            <option value="compressor">Compressor</option>
+                            <option value="turbine">Turbine</option>
+                            <option value="valve">Valve</option>
+                            <option value="heat-exchanger">Heat Exchanger</option>
+                            <option value="separator">Separator</option>
+                            <option value="motor">Motor</option>
+                            <option value="dryer">Dryer</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Work Type *</label>
+                        <select id="formMaintenanceType" class="w-full px-4 py-2 rounded-lg border border-slate-300 text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-600" required>
+                            <option value="">Select Type</option>
+                            <option value="preventive">Preventive</option>
+                            <option value="corrective">Corrective</option>
+                            <option value="predictive">Predictive</option>
+                            <option value="emergency">Emergency</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Last Service Date *</label>
+                        <input type="date" id="formLastService" class="w-full px-4 py-2 rounded-lg border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600" required>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Next Due Date *</label>
+                        <input type="date" id="formNextDue" class="w-full px-4 py-2 rounded-lg border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600" required>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Technician *</label>
+                        <input type="text" id="formTechnician" placeholder="e.g., Ahmed Hassan" class="w-full px-4 py-2 rounded-lg border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600" required>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Status *</label>
+                        <select id="formStatus" class="w-full px-4 py-2 rounded-lg border border-slate-300 text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-600" required>
+                            <option value="">Select Status</option>
+                            <option value="completed">✓ Completed</option>
+                            <option value="pending">⏱ Pending</option>
+                            <option value="in-progress">⚙ In Progress</option>
+                            <option value="overdue">⚠ Overdue</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Cost ($) *</label>
+                        <input type="number" id="formCost" placeholder="0.00" step="0.01" min="0" class="w-full px-4 py-2 rounded-lg border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600" required>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Duration (hours)</label>
+                        <input type="number" id="formDuration" placeholder="0" step="0.5" min="0" class="w-full px-4 py-2 rounded-lg border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Maintenance Notes</label>
+                    <textarea id="formNotes" placeholder="Work performed, findings, parts replaced, safety checks..." rows="4" class="w-full px-4 py-2 rounded-lg border border-slate-300 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"></textarea>
+                </div>
+                
+                <div class="flex gap-3 justify-end">
+                    <button type="button" id="cancelBtn" class="px-6 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors font-medium">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-6 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium">
+                        Save Entry
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Initialize data
+        let maintenanceData = JSON.parse(localStorage.getItem('maintenanceLog')) || [];
+        let editingId = null;
+
+        // Sample data if empty
+        if (maintenanceData.length === 0) {
+            maintenanceData = [
+                {
+                    id: 1,
+                    equipmentId: 'P-001',
+                    location: 'Platform A',
+                    equipmentType: 'pump',
+                    maintenanceType: 'preventive',
+                    lastService: '2026-03-15',
+                    nextDue: '2026-06-15',
+                    technician: 'Ahmed Hassan',
+                    status: 'completed',
+                    cost: 1250.00,
+                    duration: 3.5,
+                    notes: 'Oil change, seal inspection, and bearing alignment completed successfully.'
+                },
+                {
+                    id: 2,
+                    equipmentId: 'C-001',
+                    location: 'Processing Plant',
+                    equipmentType: 'compressor',
+                    maintenanceType: 'corrective',
+                    lastService: '2026-02-20',
+                    nextDue: '2026-04-10',
+                    technician: 'Sarah Mohammed',
+                    status: 'pending',
+                    cost: 3450.50,
+                    duration: 6,
+                    notes: 'Scheduled for valve inspection and gasket replacement.'
+                },
+                {
+                    id: 3,
+                    equipmentId: 'T-001',
+                    location: 'Well #3',
+                    equipmentType: 'turbine',
+                    maintenanceType: 'predictive',
+                    lastService: '2026-01-10',
+                    nextDue: '2026-03-25',
+                    technician: 'Karim Abdullah',
+                    status: 'overdue',
+                    cost: 5000.00,
+                    duration: 8,
+                    notes: 'Blade inspection overdue. Critical maintenance required.'
+                },
+                {
+                    id: 4,
+                    equipmentId: 'S-001',
+                    location: 'Platform B',
+                    equipmentType: 'separator',
+                    maintenanceType: 'preventive',
+                    lastService: '2026-03-01',
+                    nextDue: '2026-07-01',
+                    technician: 'Fatima Al-Rashid',
+                    status: 'in-progress',
+                    cost: 2800.00,
+                    duration: 4,
+                    notes: 'Cleaning in progress. Expected completion in 3 days.'
+                },
+                {
+                    id: 5,
+                    equipmentId: 'V-001',
+                    location: 'Pipeline Junction',
+                    equipmentType: 'valve',
+                    maintenanceType: 'preventive',
+                    lastService: '2026-03-20',
+                    nextDue: '2026-09-20',
+                    technician: 'Omar Hassan',
+                    status: 'completed',
+                    cost: 800.00,
+                    duration: 2,
+                    notes: 'Pressure test passed. Valve operational status confirmed.'
+                }
+            ];
+            saveData();
+        }
+
+        // DOM Elements
+        const modal = document.getElementById('modal');
+        const addBtn = document.getElementById('addBtn');
+        const closeModal = document.getElementById('closeModal');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const maintenanceForm = document.getElementById('maintenanceForm');
+        const tableBody = document.getElementById('tableBody');
+        const exportBtn = document.getElementById('exportBtn');
+        const filterEquipment = document.getElementById('filterEquipment');
+        const filterStatus = document.getElementById('filterStatus');
+        const filterFromDate = document.getElementById('filterFromDate');
+        const filterToDate = document.getElementById('filterToDate');
+
+        // Event Listeners
+        addBtn.addEventListener('click', openModal);
+        closeModal.addEventListener('click', closeModalFunc);
+        cancelBtn.addEventListener('click', closeModalFunc);
+        maintenanceForm.addEventListener('submit', handleSubmit);
+        exportBtn.addEventListener('click', exportToCSV);
+        filterEquipment.addEventListener('change', renderTable);
+        filterStatus.addEventListener('change', renderTable);
+        filterFromDate.addEventListener('change', renderTable);
+        filterToDate.addEventListener('change', renderTable);
+
+        function openModal() {
+            editingId = null;
+            document.getElementById('modalTitle').textContent = 'New Maintenance Entry';
+            maintenanceForm.reset();
+            modal.classList.remove('hidden');
+        }
+
+        function closeModalFunc() {
+            modal.classList.add('hidden');
+            maintenanceForm.reset();
+            editingId = null;
+        }
+
+        function handleSubmit(e) {
+            e.preventDefault();
+            
+            const entry = {
+                id: editingId || Date.now(),
+                equipmentId: document.getElementById('formEquipmentId').value,
+                location: document.getElementById('formLocation').value,
+                equipmentType: document.getElementById('formEquipmentType').value,
+                maintenanceType: document.getElementById('formMaintenanceType').value,
+                lastService: document.getElementById('formLastService').value,
+                nextDue: document.getElementById('formNextDue').value,
+                technician: document.getElementById('formTechnician').value,
+                status: document.getElementById('formStatus').value,
+                cost: parseFloat(document.getElementById('formCost').value),
+                duration: parseFloat(document.getElementById('formDuration').value) || 0,
+                notes: document.getElementById('formNotes').value
+            };
+
+            if (editingId) {
+                const index = maintenanceData.findIndex(d => d.id === editingId);
+                maintenanceData[index] = entry;
+            } else {
+                maintenanceData.push(entry);
+            }
+
+            saveData();
+            closeModalFunc();
+            renderTable();
+        }
+
+        function deleteEntry(id) {
+            if (confirm('Are you sure you want to delete this entry?')) {
+                maintenanceData = maintenanceData.filter(d => d.id !== id);
+                saveData();
+                renderTable();
+            }
+        }
+
+        function editEntry(id) {
+            editingId = id;
+            const entry = maintenanceData.find(d => d.id === id);
+            
+            document.getElementById('modalTitle').textContent = 'Edit Maintenance Entry';
+            document.getElementById('formEquipmentId').value = entry.equipmentId;
+            document.getElementById('formLocation').value = entry.location;
+            document.getElementById('formEquipmentType').value = entry.equipmentType;
+            document.getElementById('formMaintenanceType').value = entry.maintenanceType;
+            document.getElementById('formLastService').value = entry.lastService;
+            document.getElementById('formNextDue').value = entry.nextDue;
+            document.getElementById('formTechnician').value = entry.technician;
+            document.getElementById('formStatus').value = entry.status;
+            document.getElementById('formCost').value = entry.cost;
+            document.getElementById('formDuration').value = entry.duration;
+            document.getElementById('formNotes').value = entry.notes;
+            
+            modal.classList.remove('hidden');
+        }
+
+        function getStatusColor(status) {
+            const colors = {
+                completed: 'bg-green-100 text-green-800',
+                pending: 'bg-amber-100 text-amber-800',
+                'in-progress': 'bg-blue-100 text-blue-800',
+                overdue: 'bg-red-100 text-red-800'
+            };
+            return colors[status] || 'bg-slate-100 text-slate-800';
+        }
+
+        function getTypeColor(type) {
+            const colors = {
+                preventive: 'bg-slate-100 text-slate-700',
+                corrective: 'bg-orange-100 text-orange-700',
+                predictive: 'bg-purple-100 text-purple-700',
+                emergency: 'bg-red-100 text-red-700'
+            };
+            return colors[type] || 'bg-slate-100 text-slate-700';
+        }
+
+        function formatDate(dateStr) {
+            return new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        function renderTable() {
+            let filtered = [...maintenanceData];
+
+            // Apply filters
+            const equipment = filterEquipment.value;
+            const status = filterStatus.value;
+            const fromDate = filterFromDate.value;
+            const toDate = filterToDate.value;
+
+            if (equipment) {
+                filtered = filtered.filter(d => d.equipmentType === equipment);
+            }
+            if (status) {
+                filtered = filtered.filter(d => d.status === status);
+            }
+            if (fromDate) {
+                filtered = filtered.filter(d => new Date(d.lastService) >= new Date(fromDate));
+            }
+            if (toDate) {
+                filtered = filtered.filter(d => new Date(d.lastService) <= new Date(toDate));
+            }
+
+            // Sort by date descending
+            filtered.sort((a, b) => new Date(b.lastService) - new Date(a.lastService));
+
+            // Render table
+            if (filtered.length === 0) {
+                tableBody.innerHTML = '';
+                document.getElementById('emptyState').classList.remove('hidden');
+            } else {
+                document.getElementById('emptyState').classList.add('hidden');
+                tableBody.innerHTML = filtered.map(entry => `
+                    <tr class="border-b border-slate-200 hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 font-semibold text-blue-600">${entry.equipmentId}</td>
+                        <td class="px-6 py-4 text-slate-700 text-sm">${entry.location}</td>
+                        <td class="px-6 py-4 text-slate-700 capitalize text-sm">${entry.equipmentType.replace('-', ' ')}</td>
+                        <td class="px-6 py-4">
+                            <span class="inline-block px-2 py-1 rounded text-xs font-medium ${getTypeColor(entry.maintenanceType)}">
+                                ${entry.maintenanceType.replace('-', ' ')}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-slate-700 text-sm">${formatDate(entry.lastService)}</td>
+                        <td class="px-6 py-4 text-slate-700 text-sm font-medium">${formatDate(entry.nextDue)}</td>
+                        <td class="px-6 py-4 text-slate-700 text-sm">${entry.technician}</td>
+                        <td class="px-6 py-4">
+                            <span class="inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(entry.status)}">
+                                ${entry.status.replace('-', ' ')}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 font-semibold text-slate-900">$${entry.cost.toFixed(2)}</td>
+                        <td class="px-6 py-4">
+                            <div class="flex gap-2">
+                                <button onclick="editEntry(${entry.id})" class="text-blue-600 hover:text-blue-800 font-medium text-sm">Edit</button>
+                                <button onclick="deleteEntry(${entry.id})" class="text-red-600 hover:text-red-800 font-medium text-sm">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            // Update summary cards
+            updateSummary();
+            renderCriticalAlerts();
+        }
+
+        function updateSummary() {
+            const total = maintenanceData.length;
+            const completed = maintenanceData.filter(d => d.status === 'completed').length;
+            const pending = maintenanceData.filter(d => d.status === 'pending').length;
+            const overdue = maintenanceData.filter(d => d.status === 'overdue').length;
+
+            document.getElementById('totalEntries').textContent = total;
+            document.getElementById('completedCount').textContent = completed;
+            document.getElementById('pendingCount').textContent = pending;
+            document.getElementById('overdueCount').textContent = overdue;
+        }
+
+        function exportToCSV() {
+            if (maintenanceData.length === 0) {
+                alert('No data to export');
+                return;
+            }
+
+            const headers = ['Equipment ID', 'Location', 'Equipment Type', 'Work Type', 'Last Service', 'Next Due', 'Technician', 'Status', 'Cost', 'Duration (hrs)', 'Notes'];
+            const rows = maintenanceData.map(d => [
+                d.equipmentId,
+                d.location,
+                d.equipmentType,
+                d.maintenanceType,
+                d.lastService,
+                d.nextDue,
+                d.technician,
+                d.status,
+                d.cost,
+                d.duration,
+                d.notes
+            ]);
+
+            let csv = headers.join(',') + '\n';
+            rows.forEach(row => {
+                csv += row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(',') + '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `maintenance-log-${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        }
+
+        function renderCriticalAlerts() {
+            const criticalAlerts = document.getElementById('criticalAlerts');
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const overdueItems = maintenanceData.filter(d => {
+                const nextDue = new Date(d.nextDue);
+                nextDue.setHours(0, 0, 0, 0);
+                return nextDue < today && d.status !== 'completed';
+            });
+
+            if (overdueItems.length === 0) {
+                criticalAlerts.innerHTML = '';
+                return;
+            }
+
+            criticalAlerts.innerHTML = overdueItems.map(item => `
+                <div class="alert-critical p-4 rounded-lg mb-4 border">
+                    <strong>⚠️ CRITICAL:</strong> Equipment ${item.equipmentId} at ${item.location} is overdue for maintenance since ${formatDate(item.nextDue)}.
+                </div>
+            `).join('');
+        }
+
+        function saveData() {
+            localStorage.setItem('maintenanceLog', JSON.stringify(maintenanceData));
+        }
+
+        // Initial render
+        renderTable();
+    </script>
+</body>
+</html>
